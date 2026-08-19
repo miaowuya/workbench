@@ -177,6 +177,26 @@ body.dragging{user-select:none;cursor:grabbing}
   .app{flex-direction:column}
   .col.side{width:auto}
 }
+/* 云端同步弹窗 */
+.modal-mask{position:fixed;inset:0;background:rgba(30,36,50,.45);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(2px)}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.25);padding:24px;width:min(460px,92vw)}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:10px}
+.modal-tip{font-size:13px;color:var(--soft);line-height:1.6;margin-bottom:14px}
+.modal-tip code{background:#f0f3f8;padding:1px 6px;border-radius:5px;font-size:12px;color:var(--ink)}
+.modal-label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.modal-input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;outline:none;font-family:inherit}
+.modal-input:focus{border-color:var(--brand-deep);box-shadow:0 0 0 3px rgba(102,185,177,.15)}
+.modal-row{display:flex;align-items:center;gap:10px;margin:10px 0 14px}
+.modal-status{font-size:12.5px;color:var(--brand-deep);flex:1}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap}
+.modal-btn{flex:1;min-width:120px;border:1px solid var(--line);background:#f5f7fb;color:var(--ink);border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+.modal-btn:hover{background:#e6ebf3}
+.modal-btn.primary{background:var(--brand-deep);color:#fff;border-color:var(--brand-deep)}
+.modal-btn.primary:hover{filter:brightness(1.06)}
+.modal-btn.ghost{background:#fff;color:var(--soft)}
+.modal-btn.ghost:hover{background:#f5f7fb;color:var(--ink)}
+.modal-foot{font-size:11.5px;color:var(--soft);margin-top:12px;text-align:center}
 </style>
 </head>
 <body>
@@ -185,7 +205,7 @@ body.dragging{user-select:none;cursor:grabbing}
     <div class="list">
       <div class="list-head">
         <h2>✅ 待办清单</h2>
-        <span class="io-btns"><button class="io-btn" id="btnImport" type="button">导入 .ics</button><button class="io-btn" id="btnExport" type="button">导出 .ics</button><button class="io-btn" id="btnBackup" type="button">备份</button><button class="io-btn" id="btnRestore" type="button">恢复</button></span>
+        <span class="io-btns"><button class="io-btn" id="btnImport" type="button">导入 .ics</button><button class="io-btn" id="btnExport" type="button">导出 .ics</button><button class="io-btn" id="btnBackup" type="button">备份</button><button class="io-btn" id="btnRestore" type="button">恢复</button><button class="io-btn" id="btnSync" type="button">☁ 同步</button></span>
       </div>
       <input class="add" id="add" placeholder="写一条任务，回车添加…">
       <ul class="items" id="items"></ul>
@@ -1076,6 +1096,107 @@ document.getElementById('dataFile').addEventListener('change',e=>{
   r.onload=()=>{try{restoreData(String(r.result||''));}catch(err){toast('恢复失败：'+err.message);}e.target.value='';};
   r.readAsText(f);
 });
+/* ===== 云端同步（GitHub 私有仓库，档位①） ===== */
+const SYNC_OWNER='miaowuya';
+const SYNC_REPO='workbench-data';
+const SYNC_PATH='workbench-data.json';
+const SYNC_TOKEN_KEY='jumiao_sync_token';
+function getSyncToken(){return localStorage.getItem(SYNC_TOKEN_KEY)||'';}
+function setSyncToken(t){if(t)localStorage.setItem(SYNC_TOKEN_KEY,t);else localStorage.removeItem(SYNC_TOKEN_KEY);}
+function collectLocalData(){
+  const data={};
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('jumiao_'))data[k]=localStorage.getItem(k);}
+  return data;
+}
+function b64encodeUtf8(str){return btoa(unescape(encodeURIComponent(str)));}
+function b64decodeUtf8(b64){return decodeURIComponent(escape(atob(b64.replace(/\s/g,''))));}
+async function ghGetFile(token){
+  const url=`https://api.github.com/repos/${SYNC_OWNER}/${SYNC_REPO}/contents/${SYNC_PATH}`;
+  const res=await fetch(url,{headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json'}});
+  if(res.status===404)return null;
+  const j=await res.json();
+  if(res.status>=400)throw new Error(j.message||'读取云端失败');
+  return {content:JSON.parse(b64decodeUtf8(j.content)),sha:j.sha};
+}
+async function ghPutFile(token,dataObj,sha){
+  const body={message:'sync workbench '+new Date().toISOString(),content:b64encodeUtf8(JSON.stringify(dataObj,null,2))};
+  if(sha)body.sha=sha;
+  const res=await fetch(`https://api.github.com/repos/${SYNC_OWNER}/${SYNC_REPO}/contents/${SYNC_PATH}`,{
+    method:'PUT',
+    headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json','Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  const j=await res.json();
+  if(res.status>=400)throw new Error(j.message||'上传云端失败');
+  return j;
+}
+async function pushToCloud(){
+  const token=getSyncToken();
+  if(!token){toast('请先在同步弹窗里保存令牌');return;}
+  try{
+    toast('☁ 正在上传…');
+    const data=collectLocalData();
+    let sha=null;
+    try{const f=await ghGetFile(token);if(f)sha=f.sha;}catch(e){/* 云端无文件，首次创建 */}
+    await ghPutFile(token,data,sha);
+    localStorage.setItem('jumiao_sync_at',Date.now());
+    toast('☁ 已上传到云端（'+Object.keys(data).length+' 项）');
+    updateSyncStatus();
+  }catch(e){toast('上传失败：'+e.message);}
+}
+async function pullFromCloud(){
+  const token=getSyncToken();
+  if(!token){toast('请先在同步弹窗里保存令牌');return;}
+  try{
+    toast('☁ 正在下载…');
+    const f=await ghGetFile(token);
+    if(!f){toast('云端还没有数据，请先上传');return;}
+    if(!confirm('从云端下载会覆盖本机当前数据。\\n建议先点"备份"留底。确定继续下载？'))return;
+    backupData(); // 覆盖前先导出一份本地备份留底
+    Object.entries(f.content).forEach(([k,v])=>{if(k&&k.startsWith('jumiao_')&&typeof v==='string')localStorage.setItem(k,v);});
+    localStorage.setItem('jumiao_sync_at',Date.now());
+    toast('☁ 已从云端下载，正在重新加载…');
+    setTimeout(()=>location.reload(),600);
+  }catch(e){toast('下载失败：'+e.message);}
+}
+const syncMask=document.getElementById('syncMask');
+const syncTokenInput=document.getElementById('syncToken');
+function openSync(){syncTokenInput.value=getSyncToken();updateSyncStatus();syncMask.classList.add('show');}
+function closeSync(){syncMask.classList.remove('show');}
+function updateSyncStatus(){
+  const at=localStorage.getItem('jumiao_sync_at');
+  const st=document.getElementById('syncStatus');
+  st.textContent=at?('上次同步：'+new Date(+at).toLocaleString()):'尚未同步';
+}
+document.getElementById('btnSync').addEventListener('click',openSync);
+document.getElementById('syncClose').addEventListener('click',closeSync);
+syncMask.addEventListener('click',e=>{if(e.target===syncMask)closeSync();});
+document.getElementById('syncSaveToken').addEventListener('click',()=>{
+  const t=syncTokenInput.value.trim();
+  if(!t){toast('请输入令牌');return;}
+  setSyncToken(t);updateSyncStatus();toast('✅ 令牌已保存（仅本机）');
+});
+document.getElementById('syncPush').addEventListener('click',pushToCloud);
+document.getElementById('syncPull').addEventListener('click',pullFromCloud);
 </script>
+<!-- 云端同步弹窗 -->
+<div class="modal-mask" id="syncMask">
+  <div class="modal">
+    <div class="modal-title">☁ 云端同步</div>
+    <p class="modal-tip">数据存到你的私有仓库 <code>miaowuya/workbench-data</code>（GitHub 云端，不公开）。在电脑和手机打开同一个工作台网址，登录同一令牌即可双向同步。</p>
+    <label class="modal-label">GitHub 访问令牌 (PAT)</label>
+    <input class="modal-input" id="syncToken" type="password" placeholder="粘贴 ghp_... 令牌（需 repo 权限）" autocomplete="off">
+    <div class="modal-row">
+      <button class="modal-btn" id="syncSaveToken" type="button">保存令牌</button>
+      <span class="modal-status" id="syncStatus"></span>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn primary" id="syncPush" type="button">⬆ 上传到云端</button>
+      <button class="modal-btn" id="syncPull" type="button">⬇ 下载到本机</button>
+      <button class="modal-btn ghost" id="syncClose" type="button">关闭</button>
+    </div>
+    <p class="modal-foot">令牌只保存在本机浏览器（localStorage），不上传任何服务器。</p>
+  </div>
+</div>
 </body>
 </html>
