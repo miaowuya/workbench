@@ -153,7 +153,11 @@ body.dragging{user-select:none;cursor:grabbing}
 .side-bar .clr:hover{background:rgba(255,255,255,.35)}
 .side-body{flex:1;min-height:0;padding:22px}
 .side-main-col{flex:1;min-width:0;display:flex;flex-direction:column}
-.fmt-side{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:14px 7px;width:46px;flex:none;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.6);overflow:auto}
+.fmt-side{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:14px 7px;width:56px;flex:none;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.6);overflow:auto}
+.left-bar{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:14px 7px;width:56px;flex:none;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.6)}
+.left-bar .lb-btn{border:1px solid var(--line);background:#fff;color:var(--brand-deep);border-radius:8px;width:100%;height:42px;padding:0;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;line-height:1;transition:.12s;display:inline-flex;align-items:center;justify-content:center}
+.left-bar .lb-btn:hover{background:#eef1f6;border-color:var(--brand-deep)}
+.left-bar .lb-btn.on{background:var(--brand-deep);color:#fff;border-color:var(--brand-deep)}
 .fmt-side .fmt-title{font-size:12px;color:var(--soft);font-weight:600;text-align:center;margin-bottom:2px;white-space:nowrap}
 .fmt-side button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;width:100%;height:36px;padding:0;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;line-height:1;transition:.12s;display:inline-flex;align-items:center;justify-content:center}
 .fmt-side button:hover{background:#eef1f6;border-color:var(--brand-deep)}
@@ -221,11 +225,16 @@ body.dragging{user-select:none;cursor:grabbing}
 </head>
 <body>
 <div class="app">
+  <div class="left-bar" id="leftBar">
+    <button class="lb-btn" id="btnHideDone" type="button" title="收起已完成"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/><line x1="4" y1="4" x2="20" y2="20"/></svg></button>
+    <button class="lb-btn" id="btnExpandAll" type="button" title="全展开"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 9 12 4 17 9"/><polyline points="7 15 12 20 17 15"/></svg></button>
+    <button class="lb-btn" id="btnFoldAll" type="button" title="全折叠"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 9 12 4 7 9"/><polyline points="17 15 12 20 7 15"/></svg></button>
+  </div>
   <div class="col">
     <div class="list">
       <div class="list-head">
         <h2>✅ 待办清单</h2>
-        <span class="io-btns"><button class="io-btn" id="btnHideDone" type="button" title="隐藏已完成的任务">收起已完成</button><button class="io-btn" id="btnExpandAll" type="button" title="展开所有子任务">全展开</button><button class="io-btn" id="btnFoldAll" type="button" title="折叠所有子任务">全折叠</button><button class="io-btn" id="btnImport" type="button">导入 .ics</button><button class="io-btn" id="btnExport" type="button">导出 .ics</button><button class="io-btn" id="btnBackup" type="button">备份</button><button class="io-btn" id="btnRestore" type="button">恢复</button><button class="io-btn" id="btnSync" type="button">☁ 同步</button></span>
+        <span class="io-btns"><button class="io-btn" id="btnImport" type="button">导入 .ics</button><button class="io-btn" id="btnExport" type="button">导出 .ics</button><button class="io-btn" id="btnBackup" type="button">备份</button><button class="io-btn" id="btnRestore" type="button">恢复</button><button class="io-btn" id="btnSync" type="button">☁ 同步</button></span>
       </div>
       <input class="add" id="add" placeholder="写一条任务，回车添加…">
       <ul class="items" id="items"></ul>
@@ -248,7 +257,6 @@ body.dragging{user-select:none;cursor:grabbing}
       </div>
     </div>
     <div class="fmt-side" id="fmtPop">
-      <div class="fmt-title">格式</div>
       <button type="button" data-cmd="bold" title="加粗"><b>B</b></button>
       <button type="button" data-cmd="italic" title="斜体"><i>I</i></button>
       <button type="button" data-cmd="underline" title="下划线"><u>U</u></button>
@@ -704,7 +712,7 @@ function setActive(id){
 function render(){
   itemsEl.innerHTML='';
   itemsEl.classList.toggle('hide-done',hideDone);
-  var hb=document.getElementById('btnHideDone');if(hb)hb.textContent=hideDone?'显示已完成':'收起已完成';
+  var hb=document.getElementById('btnHideDone');if(hb){hb.classList.toggle('on',hideDone);hb.title=hideDone?'显示已完成':'收起已完成';}
   items.forEach((it,i)=>itemsEl.appendChild(buildNode(it,true,[i+1])));
   updateCount();
 }
