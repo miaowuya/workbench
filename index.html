@@ -155,7 +155,7 @@ body.dragging{user-select:none;cursor:grabbing}
 .side-body{flex:1;min-height:0;padding:22px}
 .side-main-col{flex:1;min-width:0;display:flex;flex-direction:column}
 .fmt-side{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:14px 7px;width:56px;flex:none;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.6);overflow:auto}
-.left-bar{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:14px 7px;width:56px;flex:none;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.6)}
+.left-bar{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:14px 5px;width:44px;flex:none;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-radius:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.6)}
 .left-bar .lb-btn{border:1px solid var(--line);background:#fff;color:var(--brand-deep);border-radius:8px;width:100%;height:42px;padding:0;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;line-height:1;transition:.12s;display:inline-flex;align-items:center;justify-content:center}
 .left-bar .lb-btn:hover{background:#eef1f6;border-color:var(--brand-deep)}
 .left-bar .lb-btn.on{background:var(--brand-deep);color:#fff;border-color:var(--brand-deep)}
@@ -228,19 +228,15 @@ body.dragging{user-select:none;cursor:grabbing}
 <div class="app">
   <div class="col">
     <div class="left-bar" id="leftBar">
-      <button class="lb-btn" id="btnHideDone" type="button" title="收起已完成"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/><line x1="4" y1="4" x2="20" y2="20"/></svg></button>
-      <button class="lb-btn" id="btnExpandAll" type="button" title="全展开"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 9 12 4 17 9"/><polyline points="7 15 12 20 17 15"/></svg></button>
-      <button class="lb-btn" id="btnFoldAll" type="button" title="全折叠"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 9 12 4 7 9"/><polyline points="17 15 12 20 7 15"/></svg></button>
-      <button class="lb-btn" id="btnImport" type="button" title="导入 .ics"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-      <button class="lb-btn" id="btnExport" type="button" title="导出 .ics"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
-      <button class="lb-btn" id="btnBackup" type="button" title="备份"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg></button>
-      <button class="lb-btn" id="btnRestore" type="button" title="恢复"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
-      <button class="lb-btn" id="btnSync" type="button" title="☁ 同步"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></button>
+      <button class="lb-btn" id="btnHideDone" type="button" title="收起已完成">收起</button>
+      <button class="lb-btn" id="btnExpandAll" type="button" title="全展开">展开</button>
+      <button class="lb-btn" id="btnFoldAll" type="button" title="全折叠">折叠</button>
     </div>
     <div class="col-body">
     <div class="list">
       <div class="list-head">
         <h2>✅ 待办清单</h2>
+        <span class="io-btns"><button class="io-btn" id="btnImport" type="button">导入 .ics</button><button class="io-btn" id="btnExport" type="button">导出 .ics</button><button class="io-btn" id="btnBackup" type="button">备份</button><button class="io-btn" id="btnRestore" type="button">恢复</button><button class="io-btn" id="btnSync" type="button">☁ 同步</button></span>
       </div>
       <input class="add" id="add" placeholder="写一条任务，回车添加…">
       <ul class="items" id="items"></ul>
@@ -719,7 +715,7 @@ function setActive(id){
 function render(){
   itemsEl.innerHTML='';
   itemsEl.classList.toggle('hide-done',hideDone);
-  var hb=document.getElementById('btnHideDone');if(hb){hb.classList.toggle('on',hideDone);hb.title=hideDone?'显示已完成':'收起已完成';}
+  var hb=document.getElementById('btnHideDone');if(hb){hb.textContent=hideDone?'显示':'收起';hb.classList.toggle('on',hideDone);hb.title=hideDone?'显示已完成':'收起已完成';}
   items.forEach((it,i)=>itemsEl.appendChild(buildNode(it,true,[i+1])));
   updateCount();
 }
