@@ -726,7 +726,7 @@ function render(){
   itemsEl.classList.toggle('hide-logs',hideLogs);
   itemsEl.classList.toggle('hide-pure',hidePure);
   var hb=document.getElementById('btnHideDone');if(hb){var sp=hb.querySelector('span');if(sp)sp.textContent=hideDone?'显示':'收起';hb.classList.toggle('on',hideDone);hb.title=hideDone?'显示已完成':'收起已完成';}
-  var hl=document.getElementById('btnHideLogs');if(hl){hl.classList.toggle('on',hideLogs);hl.title=hideLogs?'显示计时记录':'收起计时记录';}
+  var hl=document.getElementById('btnHideLogs');if(hl){hl.classList.toggle('on',!hideLogs);hl.title=!hideLogs?'收起计时记录':'显示计时记录';}
   var hp=document.getElementById('btnHidePure');if(hp){hp.classList.toggle('on',!hidePure);hp.title=!hidePure?'展开状态：显示完整信息':'纯标题模式：只显示任务标题';}
   items.forEach((it,i)=>itemsEl.appendChild(buildNode(it,true,[i+1])));
   updateCount();
@@ -749,7 +749,7 @@ document.getElementById('btnHideDone').addEventListener('click',()=>{hideDone=!h
 document.getElementById('btnExpandAll').addEventListener('click',()=>{collapsedSet.clear();render();});
 document.getElementById('btnFoldAll').addEventListener('click',()=>{collectWithSubs(items,new Set()).forEach(id=>collapsedSet.add(id));render();});
 /* 收起计时记录(只留任务内容) */
-let hideLogs=(localStorage.getItem('jumiao_hide_logs')==='1');
+let hideLogs=(localStorage.getItem('jumiao_hide_logs')!=='0');
 document.getElementById('btnHideLogs').addEventListener('click',()=>{hideLogs=!hideLogs;localStorage.setItem('jumiao_hide_logs',hideLogs?'1':'0');render();});
 /* 纯标题模式:只显示任务标题 */
 let hidePure=(localStorage.getItem('jumiao_hide_pure')!=='0');
