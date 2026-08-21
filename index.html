@@ -9,7 +9,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(135deg,#f5f7fb,#eef1f8);color:var(--ink);min-height:100vh;padding:22px 16px;display:flex;justify-content:center}
 .app{width:100%;max-width:1200px;display:flex;gap:22px;align-items:flex-start}
-.col{flex:1;min-width:0;display:flex;flex-direction:row;gap:12px;align-items:flex-start}
+.col{flex:1;min-width:0;display:flex;flex-direction:row;gap:12px;align-items:stretch}
 .col-body{flex:1;min-width:0;display:flex;flex-direction:column}
 .col.side{flex:none;width:620px;display:flex;flex-direction:row;align-items:stretch;gap:12px}
 
@@ -240,7 +240,7 @@ body.dragging{user-select:none;cursor:grabbing}
     <div class="list">
       <div class="list-head">
         <h2>✅ 待办清单</h2>
-        <span class="io-btns"><button class="io-btn" id="btnImport" type="button">导入 .ics</button><button class="io-btn" id="btnExport" type="button">导出 .ics</button><button class="io-btn" id="btnBackup" type="button">备份</button><button class="io-btn" id="btnRestore" type="button">恢复</button><button class="io-btn" id="btnSync" type="button">☁ 同步</button></span>
+        <span class="io-btns"><button class="io-btn" id="btnImport" type="button">导入 .ics</button><button class="io-btn" id="btnExport" type="button">导出 .ics</button><button class="io-btn" id="btnRestore" type="button">恢复</button><button class="io-btn" id="btnSync" type="button">☁ 同步</button></span>
       </div>
       <input class="add" id="add" placeholder="写一条任务，回车添加…">
       <ul class="items" id="items"></ul>
@@ -1190,7 +1190,7 @@ function restoreData(text){
   toast('💾 已恢复 '+n+' 项数据，正在重新加载…');
   setTimeout(()=>{if(location.reload)location.reload();else setActive(activeId);},600);
 }
-document.getElementById('btnBackup').addEventListener('click',backupData);
+var bk=document.getElementById('btnBackup');if(bk)bk.addEventListener('click',backupData);
 document.getElementById('btnRestore').addEventListener('click',()=>document.getElementById('dataFile').click());
 document.getElementById('dataFile').addEventListener('change',e=>{
   const f=e.target.files&&e.target.files[0];if(!f)return;
