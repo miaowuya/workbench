@@ -11,6 +11,12 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 .app{width:100%;max-width:1200px;display:flex;gap:22px;align-items:flex-start}
 .col{flex:1;min-width:0;display:flex;flex-direction:row;gap:12px;align-items:stretch}
 .col-body{flex:1;min-width:0;display:flex;flex-direction:column}
+.stash-col{flex:none;width:200px;display:flex;flex-direction:column;min-height:0}
+.stash-col .arch{margin-top:0;flex:1;min-height:0;display:flex;flex-direction:column}
+.stash-col .arch.open .arch-body{display:flex;flex-direction:column;flex:1;min-height:0;height:auto;overflow:auto}
+.stash-col{flex:none;width:200px;display:flex;flex-direction:column;min-height:0}
+.stash-col .arch{margin-top:0;flex:1;min-height:0;display:flex;flex-direction:column}
+.stash-col .arch.open .arch-body{display:flex;flex-direction:column;flex:1;min-height:0;height:auto;overflow:auto}
 .col.side{flex:none;width:620px;display:flex;flex-direction:row;align-items:stretch;gap:12px}
 
 /* 待办清单 */
@@ -207,6 +213,7 @@ body.dragging{user-select:none;cursor:grabbing}
   .item .row,.sub .row{min-height:44px}
   .mover{display:flex}
   body{padding-bottom:env(safe-area-inset-bottom)}
+  .stash-col{width:auto;margin-top:20px}
 }
 /* 云端同步弹窗 */
 .modal-mask{position:fixed;inset:0;background:rgba(30,36,50,.45);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(2px)}
@@ -241,6 +248,12 @@ body.dragging{user-select:none;cursor:grabbing}
       <button class="lb-btn" id="btnHidePure" type="button" title="纯标题模式：只显示任务标题"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg><span>标题</span></button>
       <button class="lb-btn" id="btnHideLogs" type="button" title="收起计时记录"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>计时</span></button>
     </div>
+    <div class="stash-col">
+      <div class="arch" id="archStash">
+        <button class="arch-head" id="archStashToggle">📥 待办储存 <span class="badge" id="archStashBadge">0</span><span class="chev">▾</span></button>
+        <div class="arch-body" id="archStashBody"></div>
+      </div>
+    </div>
     <div class="col-body">
     <div class="list">
       <div class="list-head">
@@ -255,10 +268,6 @@ body.dragging{user-select:none;cursor:grabbing}
     <div class="arch" id="archTasks">
       <button class="arch-head" id="archTasksToggle">🗄 待办归档 <span class="badge" id="archTasksBadge">0</span><span class="chev">▾</span></button>
       <div class="arch-body" id="archTasksBody"></div>
-    </div>
-    <div class="arch" id="archStash">
-      <button class="arch-head" id="archStashToggle">📥 待办储存 <span class="badge" id="archStashBadge">0</span><span class="chev">▾</span></button>
-      <div class="arch-body" id="archStashBody"></div>
     </div>
     </div>
   </div>
@@ -898,7 +907,7 @@ function renderTaskArchive(){
 }
 /* 待办储存面板 */
 const archStashEl=document.getElementById('archStash'),archStashBody=document.getElementById('archStashBody'),archStashBadge=document.getElementById('archStashBadge');
-if(localStorage.getItem('jumiao_arch_stash_open')==='1')archStashEl.classList.add('open');
+if(localStorage.getItem('jumiao_arch_stash_open')!=='0')archStashEl.classList.add('open');
 document.getElementById('archStashToggle').addEventListener('click',()=>{
   archStashEl.classList.toggle('open');
   localStorage.setItem('jumiao_arch_stash_open',archStashEl.classList.contains('open')?'1':'0');
