@@ -245,6 +245,7 @@ body.dragging{user-select:none;cursor:grabbing}
     <div class="list">
       <div class="list-head">
         <h2>✅ 待办清单</h2>
+        <button class="io-btn focus-back" id="btnFocusBack" type="button" style="display:none">← 返回全部</button>
         <span class="io-btns"><button class="io-btn" id="btnImport" type="button">导入 .ics</button><button class="io-btn" id="btnExport" type="button">导出 .ics</button><button class="io-btn" id="btnRestore" type="button">恢复</button><button class="io-btn" id="btnSync" type="button">☁ 同步</button></span>
       </div>
       <input class="add" id="add" placeholder="写一条任务，回车添加…">
@@ -254,6 +255,10 @@ body.dragging{user-select:none;cursor:grabbing}
     <div class="arch" id="archTasks">
       <button class="arch-head" id="archTasksToggle">🗄 待办归档 <span class="badge" id="archTasksBadge">0</span><span class="chev">▾</span></button>
       <div class="arch-body" id="archTasksBody"></div>
+    </div>
+    <div class="arch" id="archStash">
+      <button class="arch-head" id="archStashToggle">📥 待办储存 <span class="badge" id="archStashBadge">0</span><span class="chev">▾</span></button>
+      <div class="arch-body" id="archStashBody"></div>
     </div>
     </div>
   </div>
@@ -353,7 +358,7 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
 /* ===== 归档 ===== */
 const AKEY='jumiao_archive_v1';
-function loadArch(){try{const a=JSON.parse(localStorage.getItem(AKEY));if(a&&Array.isArray(a.tasks)&&Array.isArray(a.notes))return a;}catch{}return{tasks:[],notes:[]};}
+function loadArch(){try{const a=JSON.parse(localStorage.getItem(AKEY));if(a&&Array.isArray(a.tasks)&&Array.isArray(a.notes)){if(!Array.isArray(a.stash))a.stash=[];return a;}}catch{}return{tasks:[],notes:[],stash:[]};}
 let archive=loadArch();
 function saveArch(){localStorage.setItem(AKEY,JSON.stringify(archive));}
 function fmtDate(ts){const d=new Date(ts),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;}
@@ -614,6 +619,24 @@ function buildNode(node,top,path){
     });
     row.appendChild(archBtn);
   }
+  if(top){
+    const stashBtn=document.createElement('button');stashBtn.type='button';stashBtn.className='archbtn';stashBtn.textContent='📥 储存';
+    stashBtn.title='放入待办储存（主列表不再显示）';
+    stashBtn.addEventListener('click',ev=>{
+      ev.stopPropagation();
+      const idx=items.findIndex(it=>it.id===node.id);
+      if(idx>-1)items.splice(idx,1);
+      archive.stash.unshift({node,at:Date.now()});
+      if(focusId===node.id)focusId=null;
+      save();saveArch();render();renderTaskStash();
+      toast('📥 已存入「'+(node.text||'').slice(0,18)+'」');
+    });
+    row.appendChild(stashBtn);
+    const fbtn=document.createElement('button');fbtn.type='button';fbtn.className='archbtn';fbtn.textContent='🔍 专注';
+    fbtn.title='只看这一条（其余隐藏）';
+    fbtn.addEventListener('click',ev=>{ev.stopPropagation();focusId=node.id;render();});
+    row.appendChild(fbtn);
+  }
 
   const subs=document.createElement('ul');subs.className='subs'+(collapsedSet.has(node.id)?' collapsed':'');
   (node.subs||[]).forEach((s,j)=>subs.appendChild(buildNode(s,false,[...path,j+1])));
@@ -728,7 +751,17 @@ function setActive(id){
   if(node){const el=itemsEl.querySelector('[data-id="'+id+'"]');if(el)el.classList.add('active');}
 }
 
+let focusId=null;
 function render(){
+  var fb=document.getElementById('btnFocusBack');
+  if(fb)fb.style.display=focusId?'inline-flex':'none';
+  if(focusId){
+    itemsEl.innerHTML='';
+    var f=items.find(it=>it.id===focusId);
+    if(f)itemsEl.appendChild(buildNode(f,true,[1]));
+    updateCount();
+    return;
+  }
   itemsEl.innerHTML='';
   itemsEl.classList.toggle('hide-done',hideDone);
   itemsEl.classList.toggle('hide-logs',!showRecords);
@@ -863,6 +896,47 @@ function renderTaskArchive(){
   });
   foot.appendChild(cb);archTasksBody.appendChild(foot);
 }
+/* 待办储存面板 */
+const archStashEl=document.getElementById('archStash'),archStashBody=document.getElementById('archStashBody'),archStashBadge=document.getElementById('archStashBadge');
+if(localStorage.getItem('jumiao_arch_stash_open')==='1')archStashEl.classList.add('open');
+document.getElementById('archStashToggle').addEventListener('click',()=>{
+  archStashEl.classList.toggle('open');
+  localStorage.setItem('jumiao_arch_stash_open',archStashEl.classList.contains('open')?'1':'0');
+});
+function renderTaskStash(){
+  archStashBadge.textContent=archive.stash.length;
+  archStashBody.innerHTML='';
+  if(!archive.stash.length){
+    const e=document.createElement('div');e.className='arch-empty';e.textContent='把待办放进储存，主列表就不显示了';
+    archStashBody.appendChild(e);return;
+  }
+  archive.stash.forEach(rec=>{
+    const row=document.createElement('div');row.className='arch-row';
+    const atxt=document.createElement('div');atxt.className='atxt';
+    const t1=document.createElement('div');t1.className='t1';t1.textContent=rec.node.text||'(无标题)';
+    atxt.appendChild(t1);
+    const btns=document.createElement('div');btns.className='abtns';
+    const rs=document.createElement('button');rs.textContent='↩ 恢复';
+    rs.addEventListener('click',()=>{
+      archive.stash.splice(archive.stash.indexOf(rec),1);items.push(rec.node);save();saveArch();render();renderTaskStash();
+    });
+    const dl=document.createElement('button');dl.textContent='🗑';dl.className='del';dl.title='彻底删除';
+    dl.addEventListener('click',()=>{
+      if(confirm('彻底删除这条储存的任务？不可恢复。')){archive.stash.splice(archive.stash.indexOf(rec),1);saveArch();renderTaskStash();}
+    });
+    btns.append(rs,dl);
+    row.append(atxt,btns);archStashBody.appendChild(row);
+  });
+  const foot=document.createElement('div');foot.className='arch-foot';
+  const cb=document.createElement('button');cb.textContent='清空待办储存';
+  cb.addEventListener('click',()=>{
+    if(confirm('清空待办储存（'+archive.stash.length+' 条）？彻底删除后不可恢复。')){archive.stash=[];saveArch();renderTaskStash();}
+  });
+  foot.appendChild(cb);archStashBody.appendChild(foot);
+}
+/* 专注模式：返回全部 */
+document.getElementById('btnFocusBack').addEventListener('click',()=>{focusId=null;render();});
+renderTaskStash();
 
 /* 随手记归档面板 */
 const archNotesEl=document.getElementById('archNotes'),archNotesBody=document.getElementById('archNotesBody'),archNotesBadge=document.getElementById('archNotesBadge');
